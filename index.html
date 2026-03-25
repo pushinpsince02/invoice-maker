@@ -1,0 +1,2520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Maker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink: #1a1a1a;
+    --ink-light: #4a4a4a;
+    --ink-muted: #8a8a8a;
+    --paper: #faf9f7;
+    --paper-warm: #f5f3ef;
+    --paper-deep: #eceae4;
+    --accent: #2d5a4a;
+    --accent-light: #3a7a63;
+    --accent-pale: #e8f0ec;
+    --border: #e0ddd6;
+    --border-focus: #2d5a4a;
+    --white: #ffffff;
+    --danger: #c44;
+    --serif: 'Instrument Serif', Georgia, serif;
+    --sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --radius: 8px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .app-header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.92);
+  }
+  .app-logo {
+    font-family: var(--serif);
+    font-size: 26px;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+  .app-logo span { color: var(--accent); }
+  .header-actions { display: flex; gap: 10px; }
+
+  /* Buttons */
+  .btn {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--white);
+  }
+  .btn-primary:hover { background: var(--accent-light); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .btn-secondary {
+    background: var(--white);
+    color: var(--ink);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--ink-muted); background: var(--paper); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--accent);
+    padding: 6px 12px;
+  }
+  .btn-ghost:hover { background: var(--accent-pale); }
+  .btn-danger {
+    background: transparent;
+    color: var(--ink-muted);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 18px;
+    line-height: 1;
+  }
+  .btn-danger:hover { color: var(--danger); background: #fef2f2; }
+
+  /* Layout */
+  .app-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    min-height: calc(100vh - 61px);
+  }
+
+  /* Editor Panel */
+  .editor-panel {
+    padding: 32px 40px;
+    overflow-y: auto;
+    max-height: calc(100vh - 61px);
+    border-right: 1px solid var(--border);
+  }
+  .editor-panel::-webkit-scrollbar { width: 6px; }
+  .editor-panel::-webkit-scrollbar-track { background: transparent; }
+  .editor-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .section {
+    margin-bottom: 32px;
+    animation: fadeUp 0.4s ease both;
+  }
+  .section:nth-child(1) { animation-delay: 0.05s; }
+  .section:nth-child(2) { animation-delay: 0.1s; }
+  .section:nth-child(3) { animation-delay: 0.15s; }
+  .section:nth-child(4) { animation-delay: 0.2s; }
+  .section:nth-child(5) { animation-delay: 0.25s; }
+  .section:nth-child(6) { animation-delay: 0.3s; }
+  .section:nth-child(7) { animation-delay: 0.35s; }
+  .section:nth-child(8) { animation-delay: 0.4s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    margin-bottom: 16px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+  }
+  .field input, .field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--white);
+    transition: all 0.2s ease;
+    outline: none;
+  }
+  .field input:focus, .field textarea:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-pale);
+  }
+  .field input::placeholder, .field textarea::placeholder {
+    color: var(--ink-muted);
+    opacity: 0.6;
+  }
+  .field textarea { resize: vertical; min-height: 60px; }
+
+  /* Line Items */
+  .line-items-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .line-items-table thead th {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+    padding: 0 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .line-items-table thead th:nth-child(2),
+  .line-items-table thead th:nth-child(3),
+  .line-items-table thead th:nth-child(4) { width: 100px; text-align: right; }
+  .line-items-table thead th:last-child { width: 40px; }
+
+  .line-items-table tbody td {
+    padding: 8px;
+    vertical-align: top;
+  }
+  .line-items-table tbody td input {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--white);
+    transition: all 0.15s ease;
+    outline: none;
+  }
+  .line-items-table tbody td input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-pale);
+  }
+  .line-items-table tbody td:nth-child(2) input,
+  .line-items-table tbody td:nth-child(3) input,
+  .line-items-table tbody td:nth-child(4) input {
+    text-align: right;
+  }
+  .line-items-table tbody td:nth-child(4) input {
+    background: var(--paper);
+    color: var(--ink-muted);
+    font-weight: 600;
+    border-color: transparent;
+  }
+  .line-items-table tbody tr {
+    transition: background 0.15s ease;
+  }
+  .line-items-table tbody tr:hover {
+    background: var(--paper-warm);
+    border-radius: var(--radius);
+  }
+
+  .add-line-btn {
+    margin-top: 12px;
+  }
+
+  /* Totals in editor */
+  .totals-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+  }
+  .totals-row label {
+    font-size: 13px;
+    color: var(--ink-muted);
+    font-weight: 500;
+  }
+  .totals-row .value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    min-width: 100px;
+    text-align: right;
+  }
+  .totals-row.total {
+    border-top: 2px solid var(--ink);
+    margin-top: 8px;
+    padding-top: 12px;
+  }
+  .totals-row.total .value {
+    font-size: 18px;
+    font-family: var(--serif);
+    color: var(--accent);
+  }
+  .tax-input-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+  .tax-input-row input {
+    width: 60px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 13px;
+    text-align: right;
+    outline: none;
+    color: var(--ink);
+  }
+  .tax-input-row input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-pale);
+  }
+  .tax-input-row span { color: var(--ink-muted); font-size: 13px; }
+
+  /* Preview Panel */
+  .preview-panel {
+    padding: 32px 40px;
+    background: var(--paper-warm);
+    overflow-y: auto;
+    max-height: calc(100vh - 61px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .preview-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-muted);
+    margin-bottom: 20px;
+    align-self: flex-start;
+  }
+
+  /* Invoice Preview */
+  .invoice-preview {
+    background: var(--white);
+    width: 100%;
+    max-width: 580px;
+    padding: 48px;
+    border-radius: 4px;
+    box-shadow: var(--shadow-lg);
+    animation: fadeUp 0.5s ease 0.3s both;
+    position: relative;
+  }
+  .invoice-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    border-radius: 4px 4px 0 0;
+  }
+
+  .inv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--paper-deep);
+  }
+  .inv-brand h1 {
+    font-family: var(--serif);
+    font-size: 28px;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .inv-brand p {
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+  }
+  .inv-meta {
+    text-align: right;
+  }
+  .inv-meta .inv-title {
+    font-family: var(--serif);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    margin-bottom: 10px;
+    font-weight: 400;
+  }
+  .inv-meta p {
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.8;
+  }
+  .inv-meta strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .inv-parties {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 32px;
+  }
+  .inv-party-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .inv-party p {
+    font-size: 12px;
+    color: var(--ink-light);
+    line-height: 1.7;
+  }
+  .inv-party strong {
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+  }
+  .inv-table thead th {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    padding: 10px 0;
+    border-bottom: 2px solid var(--ink);
+    text-align: left;
+  }
+  .inv-table thead th:nth-child(2),
+  .inv-table thead th:nth-child(3),
+  .inv-table thead th:nth-child(4) { text-align: right; }
+  .inv-table tbody td {
+    padding: 10px 0;
+    font-size: 12px;
+    color: var(--ink-light);
+    border-bottom: 1px solid var(--paper-deep);
+  }
+  .inv-table tbody td:nth-child(2),
+  .inv-table tbody td:nth-child(3),
+  .inv-table tbody td:nth-child(4) { text-align: right; }
+  .inv-table tbody td:first-child { font-weight: 500; color: var(--ink); }
+
+  .inv-totals {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    margin-bottom: 32px;
+  }
+  .inv-totals-row {
+    display: flex;
+    justify-content: space-between;
+    width: 220px;
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+  .inv-totals-row span:last-child { font-weight: 600; color: var(--ink-light); }
+  .inv-totals-row.inv-grand-total {
+    border-top: 2px solid var(--ink);
+    padding-top: 10px;
+    margin-top: 4px;
+    font-size: 16px;
+  }
+  .inv-totals-row.inv-grand-total span:last-child {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--accent);
+    font-weight: 400;
+  }
+
+  .inv-notes {
+    padding-top: 20px;
+    border-top: 1px solid var(--paper-deep);
+  }
+  .inv-notes-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+  }
+  .inv-notes p {
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+  }
+  .inv-footer {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-muted);
+    opacity: 0.5;
+  }
+
+  /* Crypto Section - Editor */
+  .crypto-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .crypto-toggle span {
+    font-size: 13px;
+    color: var(--ink-light);
+    font-weight: 500;
+  }
+  .toggle-switch {
+    position: relative;
+    width: 42px;
+    height: 24px;
+    cursor: pointer;
+  }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 12px;
+    transition: 0.25s ease;
+  }
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: var(--white);
+    border-radius: 50%;
+    transition: 0.25s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .toggle-switch input:checked + .toggle-slider {
+    background: var(--accent);
+  }
+  .toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(18px);
+  }
+  .crypto-fields { display: none; }
+  .crypto-fields.active { display: block; }
+
+  .crypto-coin-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .coin-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    background: var(--white);
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+  .coin-chip:hover { border-color: var(--ink-muted); }
+  .coin-chip.selected {
+    border-color: var(--accent);
+    background: var(--accent-pale);
+    color: var(--accent);
+  }
+  .coin-chip .coin-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    color: white;
+  }
+  .coin-icon.btc { background: #f7931a; }
+  .coin-icon.eth { background: #627eea; }
+  .coin-icon.usdt { background: #26a17b; }
+  .coin-icon.usdc { background: #2775ca; }
+
+  .wallet-entry {
+    margin-bottom: 12px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--paper);
+  }
+  .wallet-entry-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .wallet-entry-header .coin-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: white;
+  }
+  .wallet-entry-header span {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .wallet-entry .field { margin-bottom: 8px; }
+  .wallet-entry .field:last-child { margin-bottom: 0; }
+  .wallet-entry .field input {
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    letter-spacing: 0.02em;
+  }
+  .wallet-network-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* Crypto Section - Preview */
+  .inv-crypto {
+    margin-top: 24px;
+    padding: 20px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--paper);
+  }
+  .inv-crypto-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .inv-crypto-title svg { opacity: 0.7; }
+  .inv-crypto-wallet {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--paper-deep);
+  }
+  .inv-crypto-wallet:last-child { border-bottom: none; }
+  .inv-crypto-wallet .coin-badge {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: white;
+  }
+  .inv-crypto-wallet .wallet-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .inv-crypto-wallet .wallet-coin-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .inv-crypto-wallet .wallet-network-label {
+    font-size: 10px;
+    color: var(--ink-muted);
+    margin-bottom: 4px;
+  }
+  .inv-crypto-wallet .wallet-addr {
+    font-size: 10px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--ink-light);
+    word-break: break-all;
+    line-height: 1.5;
+    background: var(--white);
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--paper-deep);
+  }
+  .inv-crypto-note {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--paper-deep);
+    font-size: 10px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* Empty state for preview fields */
+  .empty-field { color: var(--ink-muted); font-style: italic; opacity: 0.4; }
+
+  /* ─── Template Selector UI ─── */
+  .template-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .template-card {
+    cursor: pointer;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+    text-align: center;
+    transition: all 0.2s ease;
+    background: var(--white);
+  }
+  .template-card:hover {
+    border-color: var(--ink-muted);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+  }
+  .template-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-pale);
+  }
+  .template-card-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-light);
+    margin-top: 8px;
+    letter-spacing: 0.02em;
+  }
+  .template-card.active .template-card-label {
+    color: var(--accent);
+  }
+
+  .template-card-preview {
+    background: #fff;
+    border: 1px solid var(--paper-deep);
+    border-radius: 3px;
+    padding: 10px 8px;
+    height: 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .template-card-preview .thumb-bar {
+    height: 3px;
+    border-radius: 2px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    border-radius: 3px 3px 0 0;
+  }
+  .template-card-preview .thumb-line {
+    border-radius: 1px;
+    height: 3px;
+  }
+  .template-card-preview .thumb-line.thick { width: 60%; }
+  .template-card-preview .thumb-line.med { width: 40%; }
+  .template-card-preview .thumb-line.short { width: 25%; }
+  .template-card-preview .thumb-divider {
+    height: 1px;
+    width: 100%;
+    margin: 2px 0;
+  }
+
+  .template-thumb-classic .thumb-bar { background: linear-gradient(90deg, #2d5a4a, #3a7a63); }
+  .template-thumb-classic .thumb-line.thick { background: #2d5a4a; }
+  .template-thumb-classic .thumb-line.med { background: #c8d8d0; }
+  .template-thumb-classic .thumb-line.short { background: #dde8e2; }
+  .template-thumb-classic .thumb-divider { background: #2d5a4a; }
+
+  .template-thumb-modern { background: #0f0f1a; border-color: #1a1a2e; }
+  .template-thumb-modern .thumb-bar { background: linear-gradient(90deg, #6366f1, #818cf8); }
+  .template-thumb-modern .thumb-line.thick { background: #6366f1; }
+  .template-thumb-modern .thumb-line.med { background: #3a3a5c; }
+  .template-thumb-modern .thumb-line.short { background: #2a2a4a; }
+  .template-thumb-modern .thumb-divider { background: #6366f1; opacity: 0.4; }
+
+  .template-thumb-minimal { background: #fff; }
+  .template-thumb-minimal .thumb-bar { background: #1a1a1a; height: 2px; }
+  .template-thumb-minimal .thumb-line.thick { background: #1a1a1a; }
+  .template-thumb-minimal .thumb-line.med { background: #d0d0d0; }
+  .template-thumb-minimal .thumb-line.short { background: #e0e0e0; }
+  .template-thumb-minimal .thumb-divider { background: #e0e0e0; }
+
+  .template-thumb-bold .thumb-bar { background: #e85d3a; height: 4px; }
+  .template-thumb-bold .thumb-line.thick { background: #e85d3a; height: 4px; }
+  .template-thumb-bold .thumb-line.med { background: #f0c4b5; }
+  .template-thumb-bold .thumb-line.short { background: #f5ddd4; }
+  .template-thumb-bold .thumb-divider { background: #e85d3a; height: 2px; }
+
+  /* ═══════════════════════════════════════════
+     TEMPLATE: MODERN
+     ═══════════════════════════════════════════ */
+  .template-modern.invoice-preview {
+    background: #fafafe;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08), 0 2px 8px rgba(0,0,0,0.06);
+    font-family: var(--sans);
+    overflow: hidden;
+    padding: 0;
+  }
+  .template-modern.invoice-preview::before {
+    height: 6px;
+    background: linear-gradient(90deg, #6366f1, #818cf8, #a5b4fc);
+    border-radius: 12px 12px 0 0;
+  }
+  .template-modern .inv-header {
+    background: linear-gradient(135deg, #1e1b4b, #312e81);
+    padding: 36px 48px 32px;
+    margin: 0;
+    border-bottom: none;
+    border-radius: 0;
+  }
+  .template-modern .inv-brand h1 {
+    font-family: var(--sans);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: -0.03em;
+  }
+  .template-modern .inv-brand p {
+    color: rgba(255,255,255,0.55);
+    font-size: 12px;
+  }
+  .template-modern .inv-meta .inv-title {
+    font-family: var(--sans);
+    color: #a5b4fc;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    background: rgba(99,102,241,0.15);
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+  }
+  .template-modern .inv-meta p { color: rgba(255,255,255,0.55); }
+  .template-modern .inv-meta strong { color: #ffffff; }
+  .template-modern .inv-parties {
+    padding: 32px 48px 0;
+    margin-bottom: 24px;
+  }
+  .template-modern .inv-party-label {
+    color: #6366f1;
+    font-family: var(--sans);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+  .template-modern .inv-party p { color: #4b5563; font-size: 12px; }
+  .template-modern .inv-party strong { color: #1e1b4b; font-weight: 700; }
+  .template-modern .inv-table {
+    margin: 0 48px 24px;
+    width: calc(100% - 96px);
+  }
+  .template-modern .inv-table thead th {
+    font-family: var(--sans);
+    font-size: 10px;
+    font-weight: 700;
+    color: #6366f1;
+    border-bottom: 2px solid #6366f1;
+    padding: 10px 8px;
+    letter-spacing: 0.1em;
+  }
+  .template-modern .inv-table tbody td {
+    padding: 12px 8px;
+    font-size: 13px;
+    color: #4b5563;
+    border-bottom: 1px solid #e8e8f4;
+  }
+  .template-modern .inv-table tbody td:first-child { color: #1e1b4b; font-weight: 600; }
+  .template-modern .inv-table tbody tr:last-child td { border-bottom: none; }
+  .template-modern .inv-totals { padding: 0 48px; margin-bottom: 32px; }
+  .template-modern .inv-totals-row { font-size: 13px; color: #6b7280; }
+  .template-modern .inv-totals-row span:last-child { color: #374151; font-weight: 600; }
+  .template-modern .inv-totals-row.inv-grand-total {
+    border-top: 2px solid #6366f1;
+    padding-top: 12px;
+  }
+  .template-modern .inv-totals-row.inv-grand-total span:first-child { font-weight: 700; color: #1e1b4b; }
+  .template-modern .inv-totals-row.inv-grand-total span:last-child {
+    font-family: var(--sans);
+    font-size: 22px;
+    font-weight: 800;
+    color: #6366f1;
+    letter-spacing: -0.02em;
+  }
+  .template-modern .inv-notes { margin: 0 48px; padding-top: 20px; border-top: 1px solid #e8e8f4; }
+  .template-modern .inv-notes-label { color: #6366f1; font-family: var(--sans); }
+  .template-modern .inv-notes p { color: #6b7280; }
+  .template-modern .inv-crypto {
+    margin: 24px 48px 0;
+    border: 1px solid #e8e8f4;
+    background: #f0f0ff;
+    border-radius: 10px;
+  }
+  .template-modern .inv-crypto-title { color: #6366f1; }
+  .template-modern .inv-crypto-wallet .wallet-addr { background: #ffffff; border-color: #e8e8f4; border-radius: 6px; }
+  .template-modern .inv-crypto-wallet { border-bottom-color: #e0e0f0; }
+  .template-modern .inv-footer {
+    padding: 24px 48px;
+    margin-top: 32px;
+    background: linear-gradient(135deg, #1e1b4b, #312e81);
+    color: rgba(255,255,255,0.4);
+    font-size: 11px;
+    border-radius: 0 0 12px 12px;
+  }
+
+  /* ═══════════════════════════════════════════
+     TEMPLATE: MINIMAL
+     ═══════════════════════════════════════════ */
+  .template-minimal.invoice-preview {
+    background: #ffffff;
+    border-radius: 0;
+    box-shadow: 0 0 0 1px #e5e5e5;
+    padding: 56px 52px;
+    font-family: var(--sans);
+  }
+  .template-minimal.invoice-preview::before {
+    height: 1px;
+    background: #1a1a1a;
+    border-radius: 0;
+  }
+  .template-minimal .inv-header {
+    margin-bottom: 48px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .template-minimal .inv-brand h1 {
+    font-family: var(--sans);
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a1a;
+    letter-spacing: -0.01em;
+  }
+  .template-minimal .inv-brand p { font-size: 11px; color: #999999; }
+  .template-minimal .inv-meta .inv-title {
+    font-family: var(--sans);
+    font-size: 11px;
+    color: #999999;
+    letter-spacing: 0.2em;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .template-minimal .inv-meta p { font-size: 11px; color: #999999; line-height: 1.9; }
+  .template-minimal .inv-meta strong { color: #333333; font-weight: 500; }
+  .template-minimal .inv-parties { margin-bottom: 40px; gap: 48px; }
+  .template-minimal .inv-party-label {
+    color: #999999;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    margin-bottom: 10px;
+  }
+  .template-minimal .inv-party p { font-size: 11px; color: #666666; line-height: 1.8; }
+  .template-minimal .inv-party strong { color: #1a1a1a; font-weight: 500; font-size: 12px; }
+  .template-minimal .inv-table { margin-bottom: 32px; }
+  .template-minimal .inv-table thead th {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    color: #999999;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 0 0 12px 0;
+  }
+  .template-minimal .inv-table tbody td {
+    font-size: 11px;
+    color: #666666;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 12px 0;
+  }
+  .template-minimal .inv-table tbody td:first-child { color: #1a1a1a; font-weight: 500; }
+  .template-minimal .inv-totals { margin-bottom: 40px; }
+  .template-minimal .inv-totals-row { font-size: 11px; color: #999999; }
+  .template-minimal .inv-totals-row span:last-child { color: #333333; font-weight: 500; }
+  .template-minimal .inv-totals-row.inv-grand-total {
+    border-top: 1px solid #e5e5e5;
+    padding-top: 12px;
+    font-size: 14px;
+  }
+  .template-minimal .inv-totals-row.inv-grand-total span:last-child {
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  .template-minimal .inv-notes { border-top: 1px solid #f0f0f0; padding-top: 24px; }
+  .template-minimal .inv-notes-label { color: #999999; font-size: 9px; font-weight: 500; letter-spacing: 0.15em; }
+  .template-minimal .inv-notes p { font-size: 11px; color: #999999; line-height: 1.7; }
+  .template-minimal .inv-crypto {
+    margin-top: 28px;
+    border: 1px solid #e5e5e5;
+    border-style: solid;
+    background: #fafafa;
+    border-radius: 0;
+    padding: 20px;
+  }
+  .template-minimal .inv-crypto-title { color: #999999; font-size: 9px; letter-spacing: 0.15em; }
+  .template-minimal .inv-crypto-wallet .wallet-coin-name { font-size: 10px; color: #333333; }
+  .template-minimal .inv-crypto-wallet .wallet-network-label { font-size: 9px; color: #aaaaaa; }
+  .template-minimal .inv-crypto-wallet .wallet-addr { font-size: 9px; color: #666666; background: #ffffff; border-color: #e5e5e5; border-radius: 0; }
+  .template-minimal .inv-crypto-wallet { border-bottom-color: #f0f0f0; }
+  .template-minimal .inv-crypto-note { border-top-color: #f0f0f0; font-size: 9px; color: #aaaaaa; }
+  .template-minimal .inv-footer { margin-top: 48px; font-size: 10px; color: #cccccc; opacity: 1; }
+
+  /* ═══════════════════════════════════════════
+     TEMPLATE: BOLD
+     ═══════════════════════════════════════════ */
+  .template-bold.invoice-preview {
+    background: #ffffff;
+    border-radius: 0;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
+    padding: 52px;
+    font-family: var(--sans);
+  }
+  .template-bold.invoice-preview::before {
+    height: 8px;
+    background: linear-gradient(90deg, #e85d3a, #f59e0b);
+    border-radius: 0;
+  }
+  .template-bold .inv-header {
+    margin-bottom: 36px;
+    padding-bottom: 28px;
+    border-bottom: 4px solid #1a1a1a;
+  }
+  .template-bold .inv-brand h1 {
+    font-family: var(--sans);
+    font-size: 32px;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+  }
+  .template-bold .inv-brand p { font-size: 12px; color: #666666; font-weight: 500; }
+  .template-bold .inv-meta .inv-title {
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 900;
+    color: #e85d3a;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .template-bold .inv-meta p { font-size: 13px; color: #666666; line-height: 1.9; }
+  .template-bold .inv-meta strong { color: #1a1a1a; font-weight: 700; }
+  .template-bold .inv-parties { margin-bottom: 28px; gap: 32px; }
+  .template-bold .inv-party-label {
+    color: #e85d3a;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 3px solid #e85d3a;
+    display: inline-block;
+  }
+  .template-bold .inv-party p { font-size: 13px; color: #555555; line-height: 1.7; }
+  .template-bold .inv-party strong { color: #1a1a1a; font-weight: 700; font-size: 15px; }
+  .template-bold .inv-table { margin-bottom: 28px; }
+  .template-bold .inv-table thead th {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #ffffff;
+    background: #1a1a1a;
+    padding: 14px 12px;
+    border-bottom: none;
+    text-transform: uppercase;
+  }
+  .template-bold .inv-table thead th:first-child { border-radius: 4px 0 0 0; }
+  .template-bold .inv-table thead th:last-child { border-radius: 0 4px 0 0; }
+  .template-bold .inv-table tbody td {
+    padding: 14px 12px;
+    font-size: 14px;
+    color: #333333;
+    border-bottom: 2px solid #f0f0f0;
+    font-weight: 500;
+  }
+  .template-bold .inv-table tbody td:first-child { color: #1a1a1a; font-weight: 700; }
+  .template-bold .inv-table tbody tr:hover td { background: #fef5f2; }
+  .template-bold .inv-totals { margin-bottom: 32px; }
+  .template-bold .inv-totals-row { font-size: 14px; color: #666666; font-weight: 500; width: 260px; }
+  .template-bold .inv-totals-row span:last-child { color: #1a1a1a; font-weight: 700; }
+  .template-bold .inv-totals-row.inv-grand-total {
+    border-top: 4px solid #1a1a1a;
+    padding-top: 14px;
+    margin-top: 8px;
+    font-size: 18px;
+  }
+  .template-bold .inv-totals-row.inv-grand-total span:first-child {
+    text-transform: uppercase;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    color: #1a1a1a;
+  }
+  .template-bold .inv-totals-row.inv-grand-total span:last-child {
+    font-family: var(--sans);
+    font-size: 26px;
+    font-weight: 900;
+    color: #e85d3a;
+    letter-spacing: -0.02em;
+  }
+  .template-bold .inv-notes { border-top: 2px solid #f0f0f0; padding-top: 20px; }
+  .template-bold .inv-notes-label { color: #e85d3a; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+  .template-bold .inv-notes p { font-size: 13px; color: #666666; line-height: 1.7; }
+  .template-bold .inv-crypto {
+    margin-top: 24px;
+    border: 3px solid #e85d3a;
+    border-style: solid;
+    background: #fef5f2;
+    border-radius: 4px;
+    padding: 22px;
+  }
+  .template-bold .inv-crypto-title { color: #e85d3a; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; }
+  .template-bold .inv-crypto-wallet .wallet-coin-name { font-size: 12px; font-weight: 800; color: #1a1a1a; }
+  .template-bold .inv-crypto-wallet .wallet-addr { background: #ffffff; border: 2px solid #f0ddd4; border-radius: 4px; }
+  .template-bold .inv-crypto-wallet { border-bottom: 2px solid #f0ddd4; }
+  .template-bold .inv-crypto-note { border-top: 2px solid #f0ddd4; font-size: 11px; }
+  .template-bold .inv-footer {
+    margin-top: 36px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.3;
+  }
+
+  /* ── History Panel ── */
+  .history-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 26, 26, 0.3);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+  .history-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .history-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 440px;
+    max-width: 100vw;
+    background: var(--white);
+    z-index: 210;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    box-shadow: -8px 0 40px rgba(0, 0, 0, 0.08);
+  }
+  .history-panel.active {
+    transform: translateX(0);
+  }
+
+  .history-panel-header {
+    padding: 24px 24px 0;
+    flex-shrink: 0;
+  }
+  .history-panel-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .history-panel-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .history-close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--ink-muted);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    line-height: 1;
+  }
+  .history-close-btn:hover {
+    background: var(--paper);
+    border-color: var(--ink-muted);
+    color: var(--ink);
+  }
+
+  .history-search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .history-search {
+    flex: 1;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--paper);
+    outline: none;
+    transition: all 0.2s ease;
+  }
+  .history-search:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-pale);
+    background: var(--white);
+  }
+  .history-search::placeholder {
+    color: var(--ink-muted);
+    opacity: 0.6;
+  }
+  .history-search-wrap {
+    flex: 1;
+    position: relative;
+  }
+  .history-search-wrap svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-muted);
+    pointer-events: none;
+  }
+
+  .history-actions-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .history-count {
+    font-size: 12px;
+    color: var(--ink-muted);
+    font-weight: 500;
+  }
+  .history-clear-btn {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+  .history-clear-btn:hover {
+    color: var(--danger);
+    background: #fef2f2;
+  }
+
+  .history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 24px 24px;
+  }
+  .history-list::-webkit-scrollbar { width: 5px; }
+  .history-list::-webkit-scrollbar-track { background: transparent; }
+  .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .history-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
+    cursor: default;
+  }
+  .history-card:hover {
+    border-color: var(--ink-muted);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
+  .history-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .history-card-inv-number {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .history-card-status {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border-radius: 10px;
+    line-height: 1;
+  }
+  .history-card-status.status-paid { background: #e6f4ea; color: #1a7f37; }
+  .history-card-status.status-pending { background: #fff8e1; color: #b8860b; }
+  .history-card-status.status-overdue { background: #fef2f2; color: #c44; }
+  .history-card-status.status-draft { background: var(--paper-deep); color: var(--ink-muted); }
+
+  .history-card-client {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .history-card-meta {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  .history-card-total {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--accent);
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+
+  .history-card-actions {
+    display: flex;
+    gap: 6px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+  .history-card-actions .btn {
+    font-size: 12px;
+    padding: 6px 14px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .history-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+  }
+  .history-empty-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--paper-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    color: var(--ink-muted);
+  }
+  .history-empty h3 {
+    font-family: var(--serif);
+    font-size: 18px;
+    color: var(--ink);
+    margin-bottom: 6px;
+    font-weight: 400;
+  }
+  .history-empty p {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+    max-width: 260px;
+  }
+
+  .history-confirm {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(4px);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+  .history-confirm.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  .history-confirm h3 {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--ink);
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+  .history-confirm p {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .history-confirm-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .history-confirm-actions .btn {
+    min-width: 100px;
+    justify-content: center;
+  }
+  .btn-destroy {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--danger);
+    color: var(--white);
+  }
+  .btn-destroy:hover {
+    background: #a33;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .history-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--ink);
+    color: var(--white);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 300;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+  .history-toast.active {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* Print styles */
+  @media print {
+    body { background: white; }
+    .app-header, .editor-panel, .preview-label, .header-actions { display: none !important; }
+    .app-body { display: block; }
+    .preview-panel {
+      background: white;
+      padding: 0;
+      max-height: none;
+      overflow: visible;
+    }
+    .invoice-preview {
+      box-shadow: none;
+      padding: 0;
+      max-width: 100%;
+      border-radius: 0;
+    }
+    .invoice-preview::before { display: none; }
+    .history-overlay, .history-panel, .history-toast { display: none !important; }
+    /* Modern template print fix */
+    .template-modern.invoice-preview { padding: 0; }
+    .template-modern .inv-header { padding: 24px 0; background: #1e1b4b; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .template-modern .inv-parties { padding: 24px 0 0; }
+    .template-modern .inv-table { margin: 0; width: 100%; }
+    .template-modern .inv-totals { padding: 0; }
+    .template-modern .inv-notes { margin: 0; }
+    .template-modern .inv-crypto { margin: 24px 0 0; }
+    .template-modern .inv-footer { padding: 24px 0; }
+    /* Bold template print fix */
+    .template-bold .inv-table thead th { background: #1a1a1a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* Responsive */
+  @media (max-width: 1100px) {
+    .app-body { grid-template-columns: 1fr; }
+    .editor-panel { border-right: none; border-bottom: 1px solid var(--border); max-height: none; }
+    .preview-panel { max-height: none; }
+    .app-header { padding: 16px 24px; }
+    .editor-panel, .preview-panel { padding: 24px; }
+    .template-selector { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .history-panel { width: 100vw; }
+    .header-actions { gap: 6px; flex-wrap: wrap; }
+    .header-actions .btn { padding: 8px 12px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-logo">invoice<span>.</span></div>
+  <div class="header-actions">
+    <button class="btn btn-primary" onclick="saveInvoice()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save
+    </button>
+    <button class="btn btn-secondary" onclick="toggleHistoryPanel()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      History
+    </button>
+    <button class="btn btn-secondary" onclick="resetForm()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      Reset
+    </button>
+    <button class="btn btn-primary" onclick="window.print()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print / PDF
+    </button>
+  </div>
+</header>
+
+<div class="app-body">
+  <!-- Editor -->
+  <div class="editor-panel">
+
+    <div class="section">
+      <h2 class="section-title">Template</h2>
+      <div class="template-selector">
+        <div class="template-card active" data-template="classic" onclick="setTemplate('classic')">
+          <div class="template-card-preview template-thumb-classic">
+            <div class="thumb-bar"></div>
+            <div class="thumb-line thick"></div>
+            <div class="thumb-line med"></div>
+            <div class="thumb-line short"></div>
+            <div class="thumb-divider"></div>
+            <div class="thumb-line thick"></div>
+            <div class="thumb-line med"></div>
+          </div>
+          <span class="template-card-label">Classic</span>
+        </div>
+        <div class="template-card" data-template="modern" onclick="setTemplate('modern')">
+          <div class="template-card-preview template-thumb-modern">
+            <div class="thumb-bar"></div>
+            <div class="thumb-line thick"></div>
+            <div class="thumb-line med"></div>
+            <div class="thumb-line short"></div>
+            <div class="thumb-divider"></div>
+            <div class="thumb-line thick"></div>
+            <div class="thumb-line med"></div>
+          </div>
+          <span class="template-card-label">Modern</span>
+        </div>
+        <div class="template-card" data-template="minimal" onclick="setTemplate('minimal')">
+          <div class="template-card-preview template-thumb-minimal">
+            <div class="thumb-bar"></div>
+            <div class="thumb-line thick"></div>
+            <div class="thumb-line med"></div>
+            <div class="thumb-line short"></div>
+            <div class="thumb-divider"></div>
+            <div class="thumb-line thick"></div>
+            <div class="thumb-line med"></div>
+          </div>
+          <span class="template-card-label">Minimal</span>
+        </div>
+        <div class="template-card" data-template="bold" onclick="setTemplate('bold')">
+          <div class="template-card-preview template-thumb-bold">
+            <div class="thumb-bar"></div>
+            <div class="thumb-line thick"></div>
+            <div class="thumb-line med"></div>
+            <div class="thumb-line short"></div>
+            <div class="thumb-divider"></div>
+            <div class="thumb-line thick"></div>
+            <div class="thumb-line med"></div>
+          </div>
+          <span class="template-card-label">Bold</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Invoice Details</h2>
+      <div class="form-grid">
+        <div class="field">
+          <label>Invoice Number</label>
+          <input type="text" id="invNumber" placeholder="INV-001" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Currency</label>
+          <input type="text" id="invCurrency" placeholder="$" value="$" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Issue Date</label>
+          <input type="date" id="invDate" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Due Date</label>
+          <input type="date" id="invDue" oninput="updatePreview()">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Your Business</h2>
+      <div class="form-grid">
+        <div class="field full">
+          <label>Business Name</label>
+          <input type="text" id="bizName" placeholder="Your Company Name" oninput="updatePreview()">
+        </div>
+        <div class="field full">
+          <label>Address</label>
+          <input type="text" id="bizAddress" placeholder="123 Main St, City, State 12345" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="bizEmail" placeholder="hello@company.com" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Phone</label>
+          <input type="tel" id="bizPhone" placeholder="(555) 123-4567" oninput="updatePreview()">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Bill To</h2>
+      <div class="form-grid">
+        <div class="field full">
+          <label>Client Name</label>
+          <input type="text" id="clientName" placeholder="Client or Company Name" oninput="updatePreview()">
+        </div>
+        <div class="field full">
+          <label>Client Address</label>
+          <input type="text" id="clientAddress" placeholder="456 Client Ave, City, State 67890" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>Client Email</label>
+          <input type="email" id="clientEmail" placeholder="client@email.com" oninput="updatePreview()">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Line Items</h2>
+      <table class="line-items-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Amount</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="lineItemsBody">
+        </tbody>
+      </table>
+      <button class="btn btn-ghost add-line-btn" onclick="addLineItem()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Line Item
+      </button>
+
+      <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+        <div class="totals-row">
+          <label>Subtotal</label>
+          <span class="value" id="editorSubtotal">$0.00</span>
+        </div>
+        <div class="totals-row" style="margin-top: 4px;">
+          <label>Tax</label>
+          <div class="tax-input-row">
+            <input type="number" id="taxRate" value="0" min="0" max="100" step="0.5" oninput="updatePreview()">
+            <span>%</span>
+          </div>
+        </div>
+        <div class="totals-row" style="margin-top: 4px;">
+          <label>Tax Amount</label>
+          <span class="value" id="editorTax">$0.00</span>
+        </div>
+        <div class="totals-row total">
+          <label>Total Due</label>
+          <span class="value" id="editorTotal">$0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Notes</h2>
+      <div class="field">
+        <textarea id="invNotes" placeholder="Payment terms, bank details, thank you message..." rows="3" oninput="updatePreview()"></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Crypto Payment</h2>
+      <div class="crypto-toggle">
+        <label class="toggle-switch">
+          <input type="checkbox" id="cryptoEnabled" onchange="toggleCrypto()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span>Accept cryptocurrency payments</span>
+      </div>
+      <div class="crypto-fields" id="cryptoFields">
+        <p style="font-size: 12px; color: var(--ink-muted); margin-bottom: 14px;">Select which cryptocurrencies you accept and enter your wallet addresses.</p>
+        <div class="crypto-coin-selector" id="coinSelector">
+          <div class="coin-chip" data-coin="btc" onclick="toggleCoin('btc')">
+            <span class="coin-icon btc">B</span> BTC
+          </div>
+          <div class="coin-chip" data-coin="eth" onclick="toggleCoin('eth')">
+            <span class="coin-icon eth">E</span> ETH
+          </div>
+          <div class="coin-chip" data-coin="usdt" onclick="toggleCoin('usdt')">
+            <span class="coin-icon usdt">T</span> USDT
+          </div>
+          <div class="coin-chip" data-coin="usdc" onclick="toggleCoin('usdc')">
+            <span class="coin-icon usdc">C</span> USDC
+          </div>
+        </div>
+        <div id="walletFields"></div>
+        <div class="field" style="margin-top: 12px;">
+          <label>Payment Note (optional)</label>
+          <input type="text" id="cryptoNote" placeholder="e.g. Please confirm payment within 24 hours. Exchange rate locked at time of payment." oninput="updatePreview()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview -->
+  <div class="preview-panel">
+    <div class="preview-label">Live Preview</div>
+    <div class="invoice-preview" id="invoicePreview">
+      <div class="inv-header">
+        <div class="inv-brand">
+          <h1 id="prevBizName" class="empty-field">Your Business</h1>
+          <p id="prevBizDetails"></p>
+        </div>
+        <div class="inv-meta">
+          <div class="inv-title">Invoice</div>
+          <p>
+            <span id="prevInvNumber"></span><br>
+            <span id="prevInvDate"></span>
+            <span id="prevInvDue"></span>
+          </p>
+        </div>
+      </div>
+
+      <div class="inv-parties">
+        <div>
+          <div class="inv-party-label">From</div>
+          <div class="inv-party" id="prevFromParty">
+            <p class="empty-field">Your business details</p>
+          </div>
+        </div>
+        <div>
+          <div class="inv-party-label">Bill To</div>
+          <div class="inv-party" id="prevToParty">
+            <p class="empty-field">Client details</p>
+          </div>
+        </div>
+      </div>
+
+      <table class="inv-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody id="prevLineItems">
+          <tr><td colspan="4" style="text-align:center; padding: 20px 0;" class="empty-field">No items yet</td></tr>
+        </tbody>
+      </table>
+
+      <div class="inv-totals" id="prevTotals">
+        <div class="inv-totals-row">
+          <span>Subtotal</span>
+          <span id="prevSubtotal">$0.00</span>
+        </div>
+        <div class="inv-totals-row" id="prevTaxRow" style="display:none;">
+          <span id="prevTaxLabel">Tax (0%)</span>
+          <span id="prevTaxAmount">$0.00</span>
+        </div>
+        <div class="inv-totals-row inv-grand-total">
+          <span>Total Due</span>
+          <span id="prevTotal">$0.00</span>
+        </div>
+      </div>
+
+      <div class="inv-notes" id="prevNotesSection" style="display:none;">
+        <div class="inv-notes-label">Notes</div>
+        <p id="prevNotes"></p>
+      </div>
+
+      <div class="inv-crypto" id="prevCryptoSection" style="display:none;">
+        <div class="inv-crypto-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Cryptocurrency Payment
+        </div>
+        <div id="prevCryptoWallets"></div>
+        <div class="inv-crypto-note" id="prevCryptoNote" style="display:none;"></div>
+      </div>
+
+      <div class="inv-footer">Thank you for your business</div>
+    </div>
+  </div>
+</div>
+
+<!-- History Overlay -->
+<div class="history-overlay" id="historyOverlay" onclick="toggleHistoryPanel()"></div>
+
+<!-- History Panel -->
+<div class="history-panel" id="historyPanel">
+  <div class="history-panel-header">
+    <div class="history-panel-header-top">
+      <h2 class="history-panel-title">Invoice History</h2>
+      <button class="history-close-btn" onclick="toggleHistoryPanel()" title="Close">&times;</button>
+    </div>
+    <div class="history-search-row">
+      <div class="history-search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" class="history-search" id="historySearch" placeholder="Search by client or invoice #..." oninput="searchHistory()">
+      </div>
+    </div>
+    <div class="history-actions-bar">
+      <span class="history-count" id="historyCount">0 invoices</span>
+      <button class="history-clear-btn" id="historyClearBtn" onclick="showClearConfirm()">Clear All</button>
+    </div>
+  </div>
+  <div class="history-list" id="historyList"></div>
+
+  <div class="history-confirm" id="historyClearConfirm">
+    <h3>Clear all invoices?</h3>
+    <p>This will permanently delete all saved invoices from your history. This action cannot be undone.</p>
+    <div class="history-confirm-actions">
+      <button class="btn btn-secondary" onclick="hideClearConfirm()">Cancel</button>
+      <button class="btn-destroy" onclick="clearHistory()">Delete All</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="history-toast" id="historyToast"></div>
+
+<script>
+  let lineItems = [];
+  let itemId = 0;
+  let currentTemplate = 'classic';
+
+  function init() {
+    const today = new Date();
+    document.getElementById('invDate').value = formatDateInput(today);
+    const due = new Date(today);
+    due.setDate(due.getDate() + 30);
+    document.getElementById('invDue').value = formatDateInput(due);
+
+    addLineItem();
+    updatePreview();
+  }
+
+  function formatDateInput(d) {
+    return d.toISOString().split('T')[0];
+  }
+
+  function formatDate(str) {
+    if (!str) return '';
+    const d = new Date(str + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function getCurrency() {
+    return document.getElementById('invCurrency').value || '$';
+  }
+
+  function formatMoney(n) {
+    const c = getCurrency();
+    return c + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function addLineItem() {
+    const id = ++itemId;
+    lineItems.push({ id, description: '', qty: 1, price: 0 });
+    renderLineItems();
+    updatePreview();
+  }
+
+  function removeLineItem(id) {
+    lineItems = lineItems.filter(i => i.id !== id);
+    if (lineItems.length === 0) addLineItem();
+    else { renderLineItems(); updatePreview(); }
+  }
+
+  function renderLineItems() {
+    const tbody = document.getElementById('lineItemsBody');
+    tbody.innerHTML = lineItems.map(item => `
+      <tr>
+        <td><input type="text" placeholder="Item description" value="${escapeHtml(item.description)}" onchange="updateItem(${item.id}, 'description', this.value)"></td>
+        <td><input type="number" min="0" step="1" value="${item.qty}" onchange="updateItem(${item.id}, 'qty', this.value)" oninput="updateItem(${item.id}, 'qty', this.value)"></td>
+        <td><input type="number" min="0" step="0.01" value="${item.price || ''}" placeholder="0.00" onchange="updateItem(${item.id}, 'price', this.value)" oninput="updateItem(${item.id}, 'price', this.value)"></td>
+        <td><input type="text" value="${formatMoney(item.qty * item.price)}" readonly tabindex="-1"></td>
+        <td><button class="btn btn-danger" onclick="removeLineItem(${item.id})" title="Remove">&times;</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function updateItem(id, field, value) {
+    const item = lineItems.find(i => i.id === id);
+    if (!item) return;
+    if (field === 'description') item[field] = value;
+    else item[field] = parseFloat(value) || 0;
+    const rows = document.getElementById('lineItemsBody').rows;
+    for (let r of rows) {
+      const descInput = r.cells[0]?.querySelector('input');
+      if (descInput && r.querySelector(`[onchange*="updateItem(${id},"]`)) {
+        r.cells[3].querySelector('input').value = formatMoney(item.qty * item.price);
+        break;
+      }
+    }
+    updatePreview();
+  }
+
+  function getSubtotal() {
+    return lineItems.reduce((sum, i) => sum + (i.qty * i.price), 0);
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function updatePreview() {
+    const c = getCurrency();
+    const subtotal = getSubtotal();
+    const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+    const tax = subtotal * (taxRate / 100);
+    const total = subtotal + tax;
+
+    document.getElementById('editorSubtotal').textContent = formatMoney(subtotal);
+    document.getElementById('editorTax').textContent = formatMoney(tax);
+    document.getElementById('editorTotal').textContent = formatMoney(total);
+
+    const bizName = document.getElementById('bizName').value;
+    const bizAddress = document.getElementById('bizAddress').value;
+    const bizEmail = document.getElementById('bizEmail').value;
+    const bizPhone = document.getElementById('bizPhone').value;
+
+    const prevBizName = document.getElementById('prevBizName');
+    if (bizName) {
+      prevBizName.textContent = bizName;
+      prevBizName.classList.remove('empty-field');
+    } else {
+      prevBizName.textContent = 'Your Business';
+      prevBizName.classList.add('empty-field');
+    }
+
+    const bizDetails = [bizAddress, bizEmail, bizPhone].filter(Boolean).join(' \u00B7 ');
+    document.getElementById('prevBizDetails').textContent = bizDetails;
+
+    const fromHtml = buildPartyHtml(bizName, bizAddress, bizEmail, bizPhone, 'Your business details');
+    document.getElementById('prevFromParty').innerHTML = fromHtml;
+
+    const clientName = document.getElementById('clientName').value;
+    const clientAddress = document.getElementById('clientAddress').value;
+    const clientEmail = document.getElementById('clientEmail').value;
+    const toHtml = buildPartyHtml(clientName, clientAddress, clientEmail, '', 'Client details');
+    document.getElementById('prevToParty').innerHTML = toHtml;
+
+    const invNum = document.getElementById('invNumber').value;
+    const invDate = document.getElementById('invDate').value;
+    const invDue = document.getElementById('invDue').value;
+
+    document.getElementById('prevInvNumber').innerHTML = invNum
+      ? `<strong>#${escapeHtml(invNum)}</strong>`
+      : '<span class="empty-field">#INV-001</span>';
+    document.getElementById('prevInvDate').innerHTML = invDate
+      ? `Issued: <strong>${formatDate(invDate)}</strong><br>`
+      : '';
+    document.getElementById('prevInvDue').innerHTML = invDue
+      ? `Due: <strong>${formatDate(invDue)}</strong>`
+      : '';
+
+    const prevBody = document.getElementById('prevLineItems');
+    const filledItems = lineItems.filter(i => i.description || i.price > 0);
+    if (filledItems.length === 0) {
+      prevBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px 0;" class="empty-field">No items yet</td></tr>';
+    } else {
+      prevBody.innerHTML = filledItems.map(i => `
+        <tr>
+          <td>${escapeHtml(i.description) || '<span class="empty-field">Untitled</span>'}</td>
+          <td>${i.qty}</td>
+          <td>${formatMoney(i.price)}</td>
+          <td>${formatMoney(i.qty * i.price)}</td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('prevSubtotal').textContent = formatMoney(subtotal);
+    const taxRow = document.getElementById('prevTaxRow');
+    if (taxRate > 0) {
+      taxRow.style.display = 'flex';
+      document.getElementById('prevTaxLabel').textContent = `Tax (${taxRate}%)`;
+      document.getElementById('prevTaxAmount').textContent = formatMoney(tax);
+    } else {
+      taxRow.style.display = 'none';
+    }
+    document.getElementById('prevTotal').textContent = formatMoney(total);
+
+    const notes = document.getElementById('invNotes').value;
+    const notesSection = document.getElementById('prevNotesSection');
+    if (notes.trim()) {
+      notesSection.style.display = 'block';
+      document.getElementById('prevNotes').textContent = notes;
+    } else {
+      notesSection.style.display = 'none';
+    }
+
+    const cryptoEnabled = document.getElementById('cryptoEnabled').checked;
+    const cryptoSection = document.getElementById('prevCryptoSection');
+    const coins = Object.keys(selectedCoins).filter(c => selectedCoins[c].address.trim());
+    if (cryptoEnabled && coins.length > 0) {
+      cryptoSection.style.display = 'block';
+      const walletsHtml = coins.map(coin => {
+        const info = cryptoCoins[coin];
+        const data = selectedCoins[coin];
+        return `
+          <div class="inv-crypto-wallet">
+            <div class="coin-badge" style="background:${info.color}">${info.icon}</div>
+            <div class="wallet-info">
+              <div class="wallet-coin-name">${info.name}</div>
+              <div class="wallet-network-label">Network: ${escapeHtml(data.network)}</div>
+              <div class="wallet-addr">${escapeHtml(data.address)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('prevCryptoWallets').innerHTML = walletsHtml;
+
+      const cryptoNote = document.getElementById('cryptoNote').value;
+      const noteEl = document.getElementById('prevCryptoNote');
+      if (cryptoNote.trim()) {
+        noteEl.style.display = 'block';
+        noteEl.textContent = cryptoNote;
+      } else {
+        noteEl.style.display = 'block';
+        noteEl.textContent = 'Please verify the wallet address and network before sending. Transactions on blockchain are irreversible. Contact the sender to confirm the amount in crypto at the current exchange rate.';
+      }
+    } else {
+      cryptoSection.style.display = 'none';
+    }
+  }
+
+  function buildPartyHtml(name, address, email, phone, placeholder) {
+    if (!name && !address && !email && !phone) {
+      return `<p class="empty-field">${placeholder}</p>`;
+    }
+    let html = '';
+    if (name) html += `<strong>${escapeHtml(name)}</strong><br>`;
+    if (address) html += `${escapeHtml(address)}<br>`;
+    if (email) html += `${escapeHtml(email)}<br>`;
+    if (phone) html += `${escapeHtml(phone)}`;
+    return `<p>${html}</p>`;
+  }
+
+  // ── Template Switching ──
+  function setTemplate(name) {
+    const preview = document.getElementById('invoicePreview');
+    preview.classList.remove('template-classic', 'template-modern', 'template-minimal', 'template-bold');
+    if (name !== 'classic') {
+      preview.classList.add('template-' + name);
+    }
+    currentTemplate = name;
+    document.querySelectorAll('.template-card').forEach(card => {
+      card.classList.toggle('active', card.dataset.template === name);
+    });
+  }
+
+  // ── Crypto Payment ──
+  const cryptoCoins = {
+    btc: { name: 'Bitcoin (BTC)', icon: 'B', color: '#f7931a', defaultNetwork: 'Bitcoin Mainnet', networks: ['Bitcoin Mainnet'] },
+    eth: { name: 'Ethereum (ETH)', icon: 'E', color: '#627eea', defaultNetwork: 'Ethereum Mainnet', networks: ['Ethereum Mainnet', 'Arbitrum', 'Optimism', 'Base'] },
+    usdt: { name: 'Tether (USDT)', icon: 'T', color: '#26a17b', defaultNetwork: 'Ethereum (ERC-20)', networks: ['Ethereum (ERC-20)', 'Tron (TRC-20)', 'Solana', 'Polygon', 'BNB Chain (BEP-20)'] },
+    usdc: { name: 'USD Coin (USDC)', icon: 'C', color: '#2775ca', defaultNetwork: 'Ethereum (ERC-20)', networks: ['Ethereum (ERC-20)', 'Solana', 'Polygon', 'Arbitrum', 'Base'] },
+  };
+  let selectedCoins = {};
+
+  function toggleCrypto() {
+    const enabled = document.getElementById('cryptoEnabled').checked;
+    const fields = document.getElementById('cryptoFields');
+    fields.classList.toggle('active', enabled);
+    if (!enabled) {
+      selectedCoins = {};
+      document.querySelectorAll('.coin-chip').forEach(c => c.classList.remove('selected'));
+      document.getElementById('walletFields').innerHTML = '';
+    }
+    updatePreview();
+  }
+
+  function toggleCoin(coin) {
+    const chip = document.querySelector(`.coin-chip[data-coin="${coin}"]`);
+    if (selectedCoins[coin]) {
+      delete selectedCoins[coin];
+      chip.classList.remove('selected');
+    } else {
+      selectedCoins[coin] = { address: '', network: cryptoCoins[coin].defaultNetwork };
+      chip.classList.add('selected');
+    }
+    renderWalletFields();
+    updatePreview();
+  }
+
+  function renderWalletFields() {
+    const container = document.getElementById('walletFields');
+    const coins = Object.keys(selectedCoins);
+    if (coins.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+    container.innerHTML = coins.map(coin => {
+      const info = cryptoCoins[coin];
+      const data = selectedCoins[coin];
+      const networkOptions = info.networks.map(n =>
+        `<option value="${n}" ${n === data.network ? 'selected' : ''}>${n}</option>`
+      ).join('');
+      return `
+        <div class="wallet-entry">
+          <div class="wallet-entry-header">
+            <span class="coin-icon" style="background:${info.color}">${info.icon}</span>
+            <span>${info.name}</span>
+          </div>
+          <div class="wallet-network-row">
+            <div class="field">
+              <label>Wallet Address</label>
+              <input type="text" placeholder="Paste your ${coin.toUpperCase()} address" value="${escapeHtml(data.address)}" oninput="updateCoinData('${coin}', 'address', this.value)">
+            </div>
+            <div class="field">
+              <label>Network</label>
+              <select style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--white);outline:none;" onchange="updateCoinData('${coin}', 'network', this.value)">
+                ${networkOptions}
+              </select>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateCoinData(coin, field, value) {
+    if (selectedCoins[coin]) {
+      selectedCoins[coin][field] = value;
+      updatePreview();
+    }
+  }
+
+  // ── Invoice History ──
+  const HISTORY_KEY = 'invoice_history';
+
+  function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+  }
+
+  function getHistory() {
+    try {
+      return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    } catch {
+      return [];
+    }
+  }
+
+  function setHistory(history) {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  }
+
+  function gatherInvoiceData() {
+    const subtotal = getSubtotal();
+    const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+    const tax = subtotal * (taxRate / 100);
+    const total = subtotal + tax;
+
+    return {
+      invNumber: document.getElementById('invNumber').value,
+      currency: document.getElementById('invCurrency').value,
+      issueDate: document.getElementById('invDate').value,
+      dueDate: document.getElementById('invDue').value,
+      bizName: document.getElementById('bizName').value,
+      bizAddress: document.getElementById('bizAddress').value,
+      bizEmail: document.getElementById('bizEmail').value,
+      bizPhone: document.getElementById('bizPhone').value,
+      clientName: document.getElementById('clientName').value,
+      clientAddress: document.getElementById('clientAddress').value,
+      clientEmail: document.getElementById('clientEmail').value,
+      lineItems: lineItems.map(i => ({
+        description: i.description,
+        qty: i.qty,
+        price: i.price,
+      })),
+      taxRate: taxRate,
+      subtotal: subtotal,
+      tax: tax,
+      total: total,
+      notes: document.getElementById('invNotes').value,
+      cryptoEnabled: document.getElementById('cryptoEnabled').checked,
+      selectedCoins: JSON.parse(JSON.stringify(selectedCoins)),
+      cryptoNote: document.getElementById('cryptoNote').value,
+      template: currentTemplate,
+    };
+  }
+
+  function getInvoiceStatus(data) {
+    if (!data.dueDate) return 'draft';
+    const due = new Date(data.dueDate + 'T23:59:59');
+    const now = new Date();
+    if (data.total === 0 && data.lineItems.every(i => !i.description && i.price === 0)) return 'draft';
+    if (now > due) return 'overdue';
+    return 'pending';
+  }
+
+  function saveInvoice() {
+    const data = gatherInvoiceData();
+    const history = getHistory();
+
+    const invoice = {
+      id: generateId(),
+      ...data,
+      savedAt: new Date().toISOString(),
+    };
+
+    history.unshift(invoice);
+    setHistory(history);
+    renderHistory();
+    showToast('Invoice saved to history');
+  }
+
+  function loadInvoice(id) {
+    const history = getHistory();
+    const inv = history.find(h => h.id === id);
+    if (!inv) return;
+
+    document.getElementById('invNumber').value = inv.invNumber || '';
+    document.getElementById('invCurrency').value = inv.currency || '$';
+    document.getElementById('invDate').value = inv.issueDate || '';
+    document.getElementById('invDue').value = inv.dueDate || '';
+    document.getElementById('bizName').value = inv.bizName || '';
+    document.getElementById('bizAddress').value = inv.bizAddress || '';
+    document.getElementById('bizEmail').value = inv.bizEmail || '';
+    document.getElementById('bizPhone').value = inv.bizPhone || '';
+    document.getElementById('clientName').value = inv.clientName || '';
+    document.getElementById('clientAddress').value = inv.clientAddress || '';
+    document.getElementById('clientEmail').value = inv.clientEmail || '';
+    document.getElementById('taxRate').value = inv.taxRate || 0;
+    document.getElementById('invNotes').value = inv.notes || '';
+
+    if (inv.lineItems && inv.lineItems.length > 0) {
+      itemId = 0;
+      lineItems = inv.lineItems.map(i => ({
+        id: ++itemId,
+        description: i.description || '',
+        qty: i.qty || 0,
+        price: i.price || 0,
+      }));
+    } else {
+      lineItems = [];
+      itemId = 0;
+      addLineItem();
+    }
+    renderLineItems();
+
+    const cryptoEnabled = inv.cryptoEnabled || false;
+    document.getElementById('cryptoEnabled').checked = cryptoEnabled;
+    document.getElementById('cryptoNote').value = inv.cryptoNote || '';
+
+    selectedCoins = {};
+    document.querySelectorAll('.coin-chip').forEach(c => c.classList.remove('selected'));
+
+    if (cryptoEnabled && inv.selectedCoins) {
+      document.getElementById('cryptoFields').classList.add('active');
+      for (const coin in inv.selectedCoins) {
+        if (inv.selectedCoins.hasOwnProperty(coin)) {
+          selectedCoins[coin] = {
+            address: inv.selectedCoins[coin].address || '',
+            network: inv.selectedCoins[coin].network || cryptoCoins[coin]?.defaultNetwork || '',
+          };
+          const chip = document.querySelector(`.coin-chip[data-coin="${coin}"]`);
+          if (chip) chip.classList.add('selected');
+        }
+      }
+      renderWalletFields();
+    } else {
+      document.getElementById('cryptoFields').classList.remove('active');
+      document.getElementById('walletFields').innerHTML = '';
+    }
+
+    if (inv.template) {
+      setTemplate(inv.template);
+    }
+
+    updatePreview();
+    toggleHistoryPanel();
+    showToast('Invoice loaded');
+  }
+
+  function deleteInvoice(id) {
+    let history = getHistory();
+    history = history.filter(h => h.id !== id);
+    setHistory(history);
+    renderHistory();
+    showToast('Invoice deleted');
+  }
+
+  function duplicateInvoice(id) {
+    const history = getHistory();
+    const inv = history.find(h => h.id === id);
+    if (!inv) return;
+
+    const duplicate = {
+      ...JSON.parse(JSON.stringify(inv)),
+      id: generateId(),
+      invNumber: inv.invNumber ? inv.invNumber + ' (copy)' : '',
+      savedAt: new Date().toISOString(),
+    };
+
+    history.unshift(duplicate);
+    setHistory(history);
+    renderHistory();
+    showToast('Invoice duplicated');
+  }
+
+  function renderHistory() {
+    const history = getHistory();
+    const query = (document.getElementById('historySearch')?.value || '').toLowerCase().trim();
+    const filtered = query
+      ? history.filter(inv =>
+          (inv.clientName || '').toLowerCase().includes(query) ||
+          (inv.invNumber || '').toLowerCase().includes(query)
+        )
+      : history;
+
+    const countEl = document.getElementById('historyCount');
+    const clearBtn = document.getElementById('historyClearBtn');
+    const list = document.getElementById('historyList');
+
+    countEl.textContent = `${filtered.length} invoice${filtered.length !== 1 ? 's' : ''}`;
+    clearBtn.style.display = history.length > 0 ? '' : 'none';
+
+    if (filtered.length === 0) {
+      const isSearch = query.length > 0;
+      list.innerHTML = `
+        <div class="history-empty">
+          <div class="history-empty-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              ${isSearch
+                ? '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'
+                : '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>'
+              }
+            </svg>
+          </div>
+          <h3>${isSearch ? 'No matches found' : 'No saved invoices'}</h3>
+          <p>${isSearch
+            ? 'Try a different search term or clear the filter.'
+            : 'Save an invoice to keep a record here. Click "Save" when you\'re ready.'
+          }</p>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = filtered.map(inv => {
+      const status = getInvoiceStatus(inv);
+      const statusLabels = { draft: 'Draft', pending: 'Pending', overdue: 'Overdue', paid: 'Paid' };
+      const cur = inv.currency || '$';
+      const totalFormatted = cur + (inv.total || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const savedDate = inv.savedAt
+        ? new Date(inv.savedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : '';
+      const issueDateFormatted = inv.issueDate ? formatDate(inv.issueDate) : '';
+
+      return `
+        <div class="history-card">
+          <div class="history-card-top">
+            <span class="history-card-inv-number">${escapeHtml(inv.invNumber || 'No number')}</span>
+            <span class="history-card-status status-${status}">${statusLabels[status]}</span>
+          </div>
+          <div class="history-card-client">${escapeHtml(inv.clientName || 'No client')}</div>
+          <div class="history-card-meta">${issueDateFormatted ? 'Issued ' + issueDateFormatted : 'No date'} &middot; Saved ${savedDate}</div>
+          <div class="history-card-total">${totalFormatted}</div>
+          <div class="history-card-actions">
+            <button class="btn btn-primary" onclick="loadInvoice('${inv.id}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M8 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4"/></svg>
+              Load
+            </button>
+            <button class="btn btn-secondary" onclick="duplicateInvoice('${inv.id}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy
+            </button>
+            <button class="btn btn-secondary" onclick="deleteInvoice('${inv.id}')" style="color: var(--ink-muted);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Delete
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function searchHistory() {
+    renderHistory();
+  }
+
+  function toggleHistoryPanel() {
+    const panel = document.getElementById('historyPanel');
+    const overlay = document.getElementById('historyOverlay');
+    const isOpen = panel.classList.contains('active');
+
+    if (isOpen) {
+      panel.classList.remove('active');
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    } else {
+      renderHistory();
+      panel.classList.add('active');
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('historySearch').value = '';
+    }
+  }
+
+  function showClearConfirm() {
+    document.getElementById('historyClearConfirm').classList.add('active');
+  }
+
+  function hideClearConfirm() {
+    document.getElementById('historyClearConfirm').classList.remove('active');
+  }
+
+  function clearHistory() {
+    localStorage.removeItem(HISTORY_KEY);
+    hideClearConfirm();
+    renderHistory();
+    showToast('All invoices cleared');
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById('historyToast');
+    toast.textContent = message;
+    toast.classList.add('active');
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => {
+      toast.classList.remove('active');
+    }, 2500);
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const panel = document.getElementById('historyPanel');
+      if (panel && panel.classList.contains('active')) {
+        toggleHistoryPanel();
+      }
+      hideClearConfirm();
+    }
+  });
+
+  function resetForm() {
+    document.getElementById('invNumber').value = '';
+    document.getElementById('invCurrency').value = '$';
+    document.getElementById('bizName').value = '';
+    document.getElementById('bizAddress').value = '';
+    document.getElementById('bizEmail').value = '';
+    document.getElementById('bizPhone').value = '';
+    document.getElementById('clientName').value = '';
+    document.getElementById('clientAddress').value = '';
+    document.getElementById('clientEmail').value = '';
+    document.getElementById('taxRate').value = '0';
+    document.getElementById('invNotes').value = '';
+    document.getElementById('cryptoEnabled').checked = false;
+    document.getElementById('cryptoNote').value = '';
+    selectedCoins = {};
+    document.querySelectorAll('.coin-chip').forEach(c => c.classList.remove('selected'));
+    document.getElementById('cryptoFields').classList.remove('active');
+    document.getElementById('walletFields').innerHTML = '';
+    lineItems = [];
+    itemId = 0;
+    setTemplate('classic');
+    init();
+  }
+
+  init();
+</script>
+
+</body>
+</html>
